@@ -78,7 +78,7 @@ module "mediainfo_ame_service" {
 }
 
 ########################################
-# Buckets for testing
+# Bucket for testing
 ########################################
 resource "aws_s3_bucket" "upload" {
   bucket = "${var.global_prefix}-upload-${var.aws_region}"
