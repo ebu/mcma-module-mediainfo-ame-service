@@ -1,0 +1,37 @@
+apply from: "${project.rootDir}/gradle-tasks-for-module.gradle"
+
+task copyApiHandler(type: Copy) {
+    dependsOn "api-handler:build"
+    from file("api-handler/build/dist/lambda.zip")
+    into "build/staging/lambdas"
+    rename { "api-handler.zip" }
+}
+
+task copyWorker(type: Copy) {
+    dependsOn "worker:build"
+    from file("worker/build/dist/lambda.zip")
+    into "build/staging/lambdas"
+    rename { "worker.zip" }
+}
+
+task downloadMediaInfo(type: Download) {
+    sourceUrl = "https://mediaarea.net/download/binary/mediainfo/21.03/MediaInfo_CLI_21.03_Lambda.zip"
+    target = file("build/staging/layers/MediaInfo_CLI_21.03_Lambda.zip")
+}
+
+class Download extends DefaultTask {
+    @Input
+    String sourceUrl
+
+    @OutputFile
+    File target
+
+    @TaskAction
+    void download() {
+        ant.get(src: sourceUrl, dest: target)
+    }
+}
+
+build.dependsOn copyApiHandler
+build.dependsOn copyWorker
+build.dependsOn downloadMediaInfo
