@@ -88,7 +88,7 @@ async function startJob(resourceManager: ResourceManager, inputFile: AwsS3FileLo
         }),
         tracker: new McmaTracker({
             "id": uuidv4(),
-            "label": "Test - TestWorkflow"
+            "label": "Test - ExtractTechnicalMetadata"
         })
     });
 
@@ -122,7 +122,7 @@ async function main() {
         servicesAuthContext
     };
 
-    let resourceManager = new ResourceManager(resourceManagerConfig, new AuthProvider().add(awsV4Auth(AWS)));
+    const resourceManager = new ResourceManager(resourceManagerConfig, new AuthProvider().add(awsV4Auth(AWS)));
 
     const uploadBucket = terraformOutput.upload_bucket.value;
 
