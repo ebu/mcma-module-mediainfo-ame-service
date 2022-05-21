@@ -3,9 +3,8 @@
 #########################
 
 provider "aws" {
-  access_key = var.aws_access_key
-  secret_key = var.aws_secret_key
-  region     = var.aws_region
+  profile = var.aws_profile
+  region  = var.aws_region
 }
 
 ############################################
@@ -15,6 +14,11 @@ provider "aws" {
 resource "aws_cloudwatch_log_group" "main" {
   name = "/mcma/${var.global_prefix}"
 }
+
+#################################
+# Retrieving AWS account details
+#################################
+data "aws_caller_identity" "current" {}
 
 #########################
 # Service Registry Module
@@ -27,7 +31,7 @@ module "service_registry" {
 
   stage_name = var.environment_type
 
-  aws_account_id = var.aws_account_id
+  aws_account_id = data.aws_caller_identity.current.account_id
   aws_region     = var.aws_region
 
   log_group = aws_cloudwatch_log_group.main
@@ -50,7 +54,7 @@ module "job_processor" {
   stage_name     = var.environment_type
   dashboard_name = var.global_prefix
 
-  aws_account_id = var.aws_account_id
+  aws_account_id = data.aws_caller_identity.current.account_id
   aws_region     = var.aws_region
 
   service_registry = module.service_registry
@@ -69,8 +73,7 @@ module "mediainfo_ame_service" {
 
   stage_name = var.environment_type
 
-  aws_account_id = var.aws_account_id
-  aws_region     = var.aws_region
+  aws_region = var.aws_region
 
   service_registry = module.service_registry
 
@@ -83,11 +86,21 @@ module "mediainfo_ame_service" {
 resource "aws_s3_bucket" "upload" {
   bucket = "${var.global_prefix}-upload-${var.aws_region}"
 
-  force_destroy = true
+  lifecycle {
+    ignore_changes = [
+      lifecycle_rule
+    ]
+  }
 
-  lifecycle_rule {
-    enabled = true
-    id = "Delete after 1 day"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "upload" {
+  bucket = aws_s3_bucket.upload.id
+
+  rule {
+    id     = "Delete after 1 day"
+    status = "Enabled"
     expiration {
       days = 1
     }

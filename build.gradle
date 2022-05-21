@@ -1,9 +1,11 @@
-def requiredVersionTerraform = "~1.0.0"
-def requiredVersionNodeJS = "~12.19.0"
-def requiredVersionTsc = "^4.0.0"
+def requiredVersionTerraform = "^1.1.2"
+def requiredVersionNodeJS = "^14.17.4"
+def requiredVersionTsc = "^4.3.5"
 
-if (!hasProperty("moduleRepository")) {
-    ext.moduleRepository = ""
+buildscript {
+    dependencies {
+        classpath localGroovy()
+    }
 }
 
 allprojects {

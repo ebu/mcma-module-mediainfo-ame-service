@@ -77,14 +77,13 @@ resource "aws_apigatewayv2_stage" "service_api" {
   default_route_settings {
     data_trace_enabled       = var.xray_tracing_enabled
     detailed_metrics_enabled = var.api_gateway_metrics_enabled
-    logging_level            = var.api_gateway_logging_enabled ? "INFO" : null
     throttling_burst_limit   = 5000
     throttling_rate_limit    = 10000
   }
 
   access_log_settings {
     destination_arn = var.log_group.arn
-    format          = "{ \"requestId\":\"$context.requestId\", \"ip\": \"$context.identity.sourceIp\", \"requestTime\":\"$context.requestTime\", \"httpMethod\":\"$context.httpMethod\",\"routeKey\":\"$context.routeKey\", \"status\":\"$context.status\",\"protocol\":\"$context.protocol\", \"responseLength\":\"$context.responseLength\" }"
+    format          = "{ \"requestId\":\"$context.requestId\", \"ip\": \"$context.identity.sourceIp\", \"requestTime\":\"$context.requestTime\", \"httpMethod\":\"$context.httpMethod\", \"routeKey\":\"$context.routeKey\", \"path\":\"$context.path\", \"status\":\"$context.status\",\"protocol\":\"$context.protocol\", \"responseLength\":\"$context.responseLength\" }"
   }
 
   tags = var.tags

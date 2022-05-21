@@ -3,10 +3,10 @@ import * as childProcess from "child_process";
 
 import { AmeJob, McmaException } from "@mcma/core";
 import { ProcessJobAssignmentHelper, ProviderCollection } from "@mcma/worker";
-import { AwsS3FileLocator, AwsS3FileLocatorProperties } from "@mcma/aws-s3";
+import { S3Locator } from "@mcma/aws-s3";
 import { S3 } from "aws-sdk";
 
-const { OutputBucket } = process.env;
+const { OutputBucket, OutputBucketPrefix } = process.env;
 
 const execFile = util.promisify(childProcess.execFile);
 
@@ -24,7 +24,7 @@ export async function extractTechnicalMetadata(providers: ProviderCollection, jo
     const jobInput = jobAssignmentHelper.jobInput;
 
     logger.info("Execute media info on input file");
-    let inputFile = jobInput.get<AwsS3FileLocatorProperties>("inputFile");
+    let inputFile = jobInput.get<S3Locator>("inputFile");
 
     let output;
 
@@ -41,21 +41,7 @@ export async function extractTechnicalMetadata(providers: ProviderCollection, jo
         throw new McmaException("Failed to obtain mediaInfo stdout");
     }
 
-    let filename = inputFile.url;
-    let pos = filename.lastIndexOf("/");
-    if (pos >= 0) {
-        filename = filename.substring(pos + 1);
-    }
-    pos = filename.indexOf("?");
-    if (pos >= 0) {
-        filename = filename.substring(0, pos);
-    }
-    pos = filename.lastIndexOf(".");
-    if (pos >= 0) {
-        filename = filename.substring(0, pos);
-    }
-
-    const objectKey = `mediainfo-ame-service/${new Date().toISOString().substring(0, 19).replace(/[:]/g, "-")}/${filename}.json`;
+    const objectKey = generateFilePrefix(inputFile.url) + ".json";
 
     const outputFile = await putFile(objectKey, output?.stdout, ctx.s3);
 
@@ -74,13 +60,25 @@ async function putFile(objectKey: string, body: string, s3: S3) {
 
     await s3.putObject(params).promise();
 
-    return new AwsS3FileLocator({
-        bucket: params.Bucket,
-        key: params.Key,
+    return new S3Locator({
         url: s3.getSignedUrl("getObject", {
             Bucket: params.Bucket,
             Key: params.Key,
-            Expires: 7 * 24 * 3600
+            Expires: 12 * 3600
         })
     });
+}
+
+export function generateFilePrefix(url: string) {
+    let filename = decodeURIComponent(new URL(url).pathname);
+    let pos = filename.lastIndexOf("/");
+    if (pos >= 0) {
+        filename = filename.substring(pos + 1);
+    }
+    pos = filename.lastIndexOf(".");
+    if (pos >= 0) {
+        filename = filename.substring(0, pos);
+    }
+
+    return `${OutputBucketPrefix}${new Date().toISOString().substring(0, 19).replace(/[:]/g, "-")}/${filename}`;
 }

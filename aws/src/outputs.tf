@@ -13,7 +13,7 @@ output "service_definition" {
       name              = "ExtractTechnicalMetadata"
       input_parameters  = [{
         parameter_name = "inputFile"
-        parameter_type = "S3Locator"
+        parameter_type = "Locator"
       }]
       optional_input_parameters = []
       output_parameters = [{
@@ -26,19 +26,15 @@ output "service_definition" {
 
 output "aws_iam_role" {
   value = {
-    lambda_execution: aws_iam_role.lambda_execution
+    api_handler: aws_iam_role.api_handler
+    worker: aws_iam_role.worker
   }
 }
 
-output "aws_iam_policy" {
+output "aws_iam_role_policy" {
   value = {
-    lambda_execution: aws_iam_policy.lambda_execution
-  }
-}
-
-output "aws_iam_role_policy_attachment" {
-  value = {
-    lambda_execution: aws_iam_role_policy_attachment.lambda_execution
+    api_handler: aws_iam_role_policy.api_handler
+    worker: aws_iam_role_policy.worker
   }
 }
 

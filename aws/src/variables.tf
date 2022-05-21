@@ -36,25 +36,22 @@ variable "dead_letter_config_target" {
 
 variable "output_bucket" {
   type = object({
-    id = string
-    arn = string
+    id     = string
+    arn    = string
     bucket = string
   })
   description = "Optional bucket for service to write output files"
-  default = null
+  default     = null
 }
 
-variable "output_bucket_encryption_key" {
-  type = object({
-    id  = string
-    arn = string
-  })
-  description = "Optional Encryption key for output bucket"
-  default = null
+variable "output_bucket_prefix" {
+  type        = string
+  description = "Set an alternative prefix for output files"
+  default     = "mediainfo-ame-service/"
 }
 
 variable "output_bucket_lifecycle" {
-  type        = object({
+  type = object({
     id              = string
     enabled         = bool
     expiration_days = number
@@ -67,22 +64,9 @@ variable "output_bucket_lifecycle" {
   }
 }
 
-variable "output_bucket_logging" {
-  type        = object({
-    target_bucket = string
-    target_prefix = string
-  })
-  description = "Optional output bucket logging"
-  default     = null
-}
 #########################
 # AWS Variables
 #########################
-
-variable "aws_account_id" {
-  type        = string
-  description = "Account ID to which this module is deployed"
-}
 
 variable "aws_region" {
   type        = string
@@ -95,21 +79,21 @@ variable "iam_role_path" {
   default     = "/"
 }
 
-variable "iam_policy_path" {
-  type        = string
-  description = "Path for creation of access policy"
-  default     = "/"
-}
-
 #########################
 # Dependencies
 #########################
 
 variable "service_registry" {
   type = object({
-    auth_type    = string,
-    services_url = string,
+    auth_type    = string
+    services_url = string
   })
+}
+
+variable "execute_api_arns" {
+  type        = list(string)
+  description = "Optional ist of api gateway execution arns that will allow you to control which APIs the lambdas are allowed to invoke"
+  default     = ["arn:aws:execute-api:*:*:*"]
 }
 
 #########################
@@ -123,12 +107,6 @@ variable "log_group" {
     name = string
   })
   description = "Log group used by MCMA Event tracking"
-}
-
-variable "api_gateway_logging_enabled" {
-  type        = bool
-  description = "Enable API Gateway logging"
-  default     = false
 }
 
 variable "api_gateway_metrics_enabled" {

@@ -7,15 +7,17 @@ import * as AWS from "aws-sdk";
 
 import { AuthProvider, ResourceManager } from "@mcma/client";
 import { AmeJob, Job, JobParameterBag, JobProfile, JobStatus, McmaException, McmaTracker, Utils } from "@mcma/core";
-import { AwsS3FileLocator } from "@mcma/aws-s3";
+import { S3Locator } from "@mcma/aws-s3";
 import { awsV4Auth } from "@mcma/aws-client";
 
-const AWS_CREDENTIALS = "../../deployment/aws-credentials.json";
+const { AwsProfile, AwsRegion } = process.env;
+
+AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: AwsProfile });
+AWS.config.region = AwsRegion;
+
 const TERRAFORM_OUTPUT = "../../deployment/terraform.output.json";
 
-const MEDIA_FILE = "C:/Media/2015_GF_ORF_00_18_09_conv.mp4";
-
-AWS.config.loadFromPath(AWS_CREDENTIALS);
+const MEDIA_FILE = "C:/Media/Demo/2015_GF_ORF_00_18_09_conv.mp4";
 
 const s3 = new AWS.S3();
 
@@ -47,9 +49,7 @@ async function uploadFileToBucket(bucket: string, filename: string) {
         await s3.upload(uploadParams).promise();
     }
 
-    return new AwsS3FileLocator({
-        bucket: uploadParams.Bucket,
-        key: uploadParams.Key,
+    return new S3Locator({
         url: s3.getSignedUrl("getObject", {
             Bucket: uploadParams.Bucket,
             Key: uploadParams.Key,
@@ -73,7 +73,7 @@ async function waitForJobCompletion(job: Job, resourceManager: ResourceManager):
     return job;
 }
 
-async function startJob(resourceManager: ResourceManager, inputFile: AwsS3FileLocator) {
+async function startJob(resourceManager: ResourceManager, inputFile: S3Locator) {
     let [jobProfile] = await resourceManager.query(JobProfile, { name: "ExtractTechnicalMetadata" });
 
     // if not found bail out
@@ -95,7 +95,7 @@ async function startJob(resourceManager: ResourceManager, inputFile: AwsS3FileLo
     return resourceManager.create(distributionJob);
 }
 
-async function testJob(resourceManager: ResourceManager, inputFile: AwsS3FileLocator) {
+async function testJob(resourceManager: ResourceManager, inputFile: S3Locator) {
     let job;
 
     console.log("Creating job");
