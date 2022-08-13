@@ -24,7 +24,7 @@ export async function extractTechnicalMetadata(providers: ProviderCollection, jo
     const jobInput = jobAssignmentHelper.jobInput;
 
     logger.info("Execute media info on input file");
-    let inputFile = jobInput.get<S3Locator>("inputFile");
+    let inputFile = jobInput.inputFile as S3Locator;
 
     let output;
 
@@ -43,9 +43,7 @@ export async function extractTechnicalMetadata(providers: ProviderCollection, jo
 
     const objectKey = generateFilePrefix(inputFile.url) + ".json";
 
-    const outputFile = await putFile(objectKey, output?.stdout, ctx.s3);
-
-    jobAssignmentHelper.jobOutput.set("outputFile", outputFile);
+    jobAssignmentHelper.jobOutput.outputFile = await putFile(objectKey, output?.stdout, ctx.s3);
 
     logger.info("Marking JobAssignment as completed");
     await jobAssignmentHelper.complete();
