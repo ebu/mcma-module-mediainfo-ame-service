@@ -6,7 +6,7 @@ import { ProcessJobAssignmentHelper, ProviderCollection } from "@mcma/worker";
 import { S3Locator } from "@mcma/aws-s3";
 import { S3 } from "aws-sdk";
 
-const { OutputBucket, OutputBucketPrefix } = process.env;
+const { OUTPUT_BUCKET, OUTPUT_BUCKET_PREFIX } = process.env;
 
 const execFile = util.promisify(childProcess.execFile);
 
@@ -51,7 +51,7 @@ export async function extractTechnicalMetadata(providers: ProviderCollection, jo
 
 async function putFile(objectKey: string, body: string, s3: S3) {
     const params: S3.PutObjectRequest = {
-        Bucket: OutputBucket,
+        Bucket: OUTPUT_BUCKET,
         Key: objectKey,
         Body: body
     };
@@ -78,5 +78,5 @@ export function generateFilePrefix(url: string) {
         filename = filename.substring(0, pos);
     }
 
-    return `${OutputBucketPrefix}${new Date().toISOString().substring(0, 19).replace(/[:]/g, "-")}/${filename}`;
+    return `${OUTPUT_BUCKET_PREFIX}${new Date().toISOString().substring(0, 19).replace(/[:]/g, "-")}/${filename}`;
 }

@@ -9,16 +9,16 @@
     "main": "build/staging/index.js",
     "license": "UNLICENSED",
     "dependencies": {
-        "@mcma/aws-client": "0.14.7",
-        "@mcma/aws-s3": "0.14.7",
-        "@mcma/client": "0.14.7",
-        "@mcma/core": "0.14.7",
+        "@mcma/aws-client": "0.15.0",
+        "@mcma/aws-s3": "0.15.0",
+        "@mcma/client": "0.15.0",
+        "@mcma/core": "0.15.0",
         "aws-sdk": "^2.907.0",
         "mime-types": "^2.1.27",
         "uuid": "^8.3.2"
     },
     "devDependencies": {
-        "@types/node": "^12.20.13",
+        "@types/node": "^16.11.60",
         "@types/uuid": "^8.3.0",
         "@types/mime-types": "^2.1.0"
     }

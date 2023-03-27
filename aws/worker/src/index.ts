@@ -4,18 +4,16 @@ import * as AWSXRay from "aws-xray-sdk-core";
 import { AuthProvider, ResourceManagerProvider } from "@mcma/client";
 import { ProcessJobAssignmentOperation, ProviderCollection, Worker, WorkerRequest, WorkerRequestProperties } from "@mcma/worker";
 import { DynamoDbTableProvider } from "@mcma/aws-dynamodb";
-import { AwsCloudWatchLoggerProvider } from "@mcma/aws-logger";
+import { AwsCloudWatchLoggerProvider, getLogGroupName } from "@mcma/aws-logger";
 import { awsV4Auth } from "@mcma/aws-client";
 import { AmeJob } from "@mcma/core";
 import { extractTechnicalMetadata } from "./operations";
-
-const { LogGroupName } = process.env;
 
 const AWS = AWSXRay.captureAWS(require("aws-sdk"));
 
 const authProvider = new AuthProvider().add(awsV4Auth(AWS));
 const dbTableProvider = new DynamoDbTableProvider();
-const loggerProvider = new AwsCloudWatchLoggerProvider("mediainfo-ame-service-worker", LogGroupName);
+const loggerProvider = new AwsCloudWatchLoggerProvider("mediainfo-ame-service-worker", getLogGroupName());
 const resourceManagerProvider = new ResourceManagerProvider(authProvider);
 
 const providerCollection = new ProviderCollection({

@@ -4,7 +4,7 @@
 
 locals {
   lambda_name_api_handler = format("%.64s", replace("${var.prefix}-api-handler", "/[^a-zA-Z0-9_]+/", "-" ))
-  api_handler_zip_file = "${path.module}/lambdas/api-handler.zip"
+  api_handler_zip_file    = "${path.module}/lambdas/api-handler.zip"
 }
 
 resource "aws_iam_role" "api_handler" {
@@ -17,13 +17,15 @@ resource "aws_iam_role" "api_handler" {
       {
         Sid       = "AllowLambdaAssumingRole"
         Effect    = "Allow"
-        Action    = "sts:AssumeRole",
+        Action    = "sts:AssumeRole"
         Principal = {
-          "Service" = "lambda.amazonaws.com"
+          Service = "lambda.amazonaws.com"
         }
       }
     ]
   })
+
+  permissions_boundary = var.iam_permissions_boundary
 
   tags = var.tags
 }
@@ -42,9 +44,9 @@ resource "aws_iam_role_policy" "api_handler" {
         Resource = "*"
       },
       {
-        Sid      = "WriteToCloudWatchLogs"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "WriteToCloudWatchLogs"
+        Effect = "Allow"
+        Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
@@ -57,9 +59,9 @@ resource "aws_iam_role_policy" "api_handler" {
         ] : [])
       },
       {
-        Sid      = "ListAndDescribeDynamoDBTables"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "ListAndDescribeDynamoDBTables"
+        Effect = "Allow"
+        Action = [
           "dynamodb:List*",
           "dynamodb:DescribeReservedCapacity*",
           "dynamodb:DescribeLimits",
@@ -68,9 +70,9 @@ resource "aws_iam_role_policy" "api_handler" {
         Resource = "*"
       },
       {
-        Sid      = "AllowTableOperations"
-        Effect   = "Allow"
-        Action   = [
+        Sid    = "AllowTableOperations"
+        Effect = "Allow"
+        Action = [
           "dynamodb:BatchGetItem",
           "dynamodb:BatchWriteItem",
           "dynamodb:DeleteItem",
@@ -90,30 +92,30 @@ resource "aws_iam_role_policy" "api_handler" {
         Resource = aws_lambda_function.worker.arn
       },
     ],
-    var.xray_tracing_enabled ?
-    [
-      {
-        Sid      = "AllowLambdaWritingToXRay"
-        Effect   = "Allow"
-        Action   = [
-          "xray:PutTraceSegments",
-          "xray:PutTelemetryRecords",
-          "xray:GetSamplingRules",
-          "xray:GetSamplingTargets",
-          "xray:GetSamplingStatisticSummaries",
-        ]
-        Resource = "*"
-      }
-    ] : [],
-    var.dead_letter_config_target != null ?
-    [
-      {
-        Sid      = "AllowLambdaToSendToDLQ"
-        Effect   = "Allow"
-        Action   = "sqs:SendMessage"
-        Resource = var.dead_letter_config_target
-      }
-    ] : [])
+      var.xray_tracing_enabled ?
+      [
+        {
+          Sid    = "AllowLambdaWritingToXRay"
+          Effect = "Allow"
+          Action = [
+            "xray:PutTraceSegments",
+            "xray:PutTelemetryRecords",
+            "xray:GetSamplingRules",
+            "xray:GetSamplingTargets",
+            "xray:GetSamplingStatisticSummaries",
+          ]
+          Resource = "*"
+        }
+      ] : [],
+      var.dead_letter_config_target != null ?
+      [
+        {
+          Sid      = "AllowLambdaToSendToDLQ"
+          Effect   = "Allow"
+          Action   = "sqs:SendMessage"
+          Resource = var.dead_letter_config_target
+        }
+      ] : [])
   })
 }
 
@@ -127,18 +129,19 @@ resource "aws_lambda_function" "api_handler" {
   handler          = "index.handler"
   filename         = local.api_handler_zip_file
   source_code_hash = filebase64sha256(local.api_handler_zip_file)
-  runtime          = "nodejs14.x"
+  runtime          = "nodejs16.x"
   timeout          = "30"
   memory_size      = "2048"
 
-  layers = var.enhanced_monitoring_enabled ? ["arn:aws:lambda:${var.aws_region}:580247275435:layer:LambdaInsightsExtension:14"] : []
+  layers = var.enhanced_monitoring_enabled && contains(keys(local.lambda_insights_extensions), var.aws_region) ? [
+    local.lambda_insights_extensions[var.aws_region]
+  ] : []
 
   environment {
     variables = {
-      LogGroupName     = var.log_group.name
-      TableName        = aws_dynamodb_table.service_table.name
-      PublicUrl        = local.service_url
-      WorkerFunctionId = aws_lambda_function.worker.function_name
+      MCMA_TABLE_NAME         = aws_dynamodb_table.service_table.name
+      MCMA_PUBLIC_URL         = local.service_url
+      MCMA_WORKER_FUNCTION_ID = aws_lambda_function.worker.function_name
     }
   }
 

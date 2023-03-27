@@ -75,7 +75,6 @@ resource "aws_apigatewayv2_stage" "service_api" {
   auto_deploy = true
 
   default_route_settings {
-    data_trace_enabled       = var.xray_tracing_enabled
     detailed_metrics_enabled = var.api_gateway_metrics_enabled
     throttling_burst_limit   = 5000
     throttling_rate_limit    = 10000
