@@ -1,10 +1,11 @@
 import * as util from "util";
 import * as childProcess from "child_process";
+import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { AmeJob, McmaException } from "@mcma/core";
 import { ProcessJobAssignmentHelper, ProviderCollection } from "@mcma/worker";
 import { S3Locator } from "@mcma/aws-s3";
-import { S3 } from "aws-sdk";
 
 const { OUTPUT_BUCKET, OUTPUT_BUCKET_PREFIX } = process.env;
 
@@ -19,7 +20,7 @@ export async function mediaInfo(params: string[]) {
     }
 }
 
-export async function extractTechnicalMetadata(providers: ProviderCollection, jobAssignmentHelper: ProcessJobAssignmentHelper<AmeJob>, ctx: { s3: S3 }) {
+export async function extractTechnicalMetadata(providers: ProviderCollection, jobAssignmentHelper: ProcessJobAssignmentHelper<AmeJob>, ctx: { s3Client: S3Client }) {
     const logger = jobAssignmentHelper.logger;
     const jobInput = jobAssignmentHelper.jobInput;
 
@@ -43,28 +44,25 @@ export async function extractTechnicalMetadata(providers: ProviderCollection, jo
 
     const objectKey = generateFilePrefix(inputFile.url) + ".json";
 
-    jobAssignmentHelper.jobOutput.outputFile = await putFile(objectKey, output?.stdout, ctx.s3);
+    jobAssignmentHelper.jobOutput.outputFile = await putFile(objectKey, output?.stdout, ctx.s3Client);
 
     logger.info("Marking JobAssignment as completed");
     await jobAssignmentHelper.complete();
 }
 
-async function putFile(objectKey: string, body: string, s3: S3) {
-    const params: S3.PutObjectRequest = {
+async function putFile(objectKey: string, body: string, s3Client: S3Client) {
+    await s3Client.send(new PutObjectCommand({
         Bucket: OUTPUT_BUCKET,
         Key: objectKey,
-        Body: body
-    };
+        Body: body,
+    }));
 
-    await s3.putObject(params).promise();
-
-    return new S3Locator({
-        url: s3.getSignedUrl("getObject", {
-            Bucket: params.Bucket,
-            Key: params.Key,
-            Expires: 12 * 3600
-        })
+    const command = new GetObjectCommand({
+        Bucket: OUTPUT_BUCKET,
+        Key: objectKey,
     });
+
+    return new S3Locator({ url: await getSignedUrl(s3Client, command, { expiresIn: 12 * 3600 }) });
 }
 
 export function generateFilePrefix(url: string) {
