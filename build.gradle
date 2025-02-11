@@ -149,8 +149,8 @@ task publish(type: Exec) {
                 commandLine gitExecutable
                 workingDir projectDir
                 args "status", "--porcelain"
-                standardOutput stdout
-                errorOutput stderr
+                standardOutput = stdout
+                errorOutput = stderr
             }
         } catch (Exception ignored) {
         }
