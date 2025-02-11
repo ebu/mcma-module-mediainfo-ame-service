@@ -1,22 +1,20 @@
-apply from: "${project.rootDir}/gradle-tasks-for-module.gradle"
-
 task copyApiHandler(type: Copy) {
     dependsOn "api-handler:build"
     from file("api-handler/build/dist/lambda.zip")
-    into "build/staging/lambdas"
+    into "module/lambdas"
     rename { "api-handler.zip" }
 }
 
 task copyWorker(type: Copy) {
     dependsOn "worker:build"
     from file("worker/build/dist/lambda.zip")
-    into "build/staging/lambdas"
+    into "module/lambdas"
     rename { "worker.zip" }
 }
 
 task downloadMediaInfo(type: Download) {
-    sourceUrl = "https://mediaarea.net/download/binary/mediainfo/21.03/MediaInfo_CLI_21.03_Lambda.zip"
-    target = file("build/staging/layers/MediaInfo_CLI_21.03_Lambda.zip")
+    sourceUrl = "https://mediaarea.net/download/binary/mediainfo/24.12/MediaInfo_CLI_24.12_Lambda_x86_64.zip"
+    target = file("module/layers/MediaInfo_CLI_24.12_Lambda_x86_64.zip")
 }
 
 class Download extends DefaultTask {
@@ -32,6 +30,8 @@ class Download extends DefaultTask {
     }
 }
 
-build.dependsOn copyApiHandler
-build.dependsOn copyWorker
-build.dependsOn downloadMediaInfo
+task build {
+    dependsOn copyApiHandler
+    dependsOn copyWorker
+    dependsOn downloadMediaInfo
+}

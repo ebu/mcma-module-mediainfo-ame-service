@@ -3,5 +3,4 @@ include "aws",
         "aws:worker",
         "deployment",
         "scripts",
-        "scripts:publish",
         "scripts:test-service"

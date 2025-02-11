@@ -21,10 +21,7 @@ const routes = new DefaultJobRouteCollection(dbTableProvider, workerInvoker);
 const restController = new ApiGatewayApiController(routes, loggerProvider);
 
 export async function handler(event: APIGatewayProxyEvent, context: Context) {
-    console.log(JSON.stringify(event, null, 2));
-    console.log(JSON.stringify(context, null, 2));
-
-    const logger = loggerProvider.get(context.awsRequestId);
+    const logger = await loggerProvider.get(context.awsRequestId);
     try {
         logger.functionStart(context.awsRequestId);
         logger.debug(event);
